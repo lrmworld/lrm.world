@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ASCII Ocean Waves</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #eaeaea;
+      color: #000;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .frame {
+      width: min(100%, 960px);
+      margin: 0 auto;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    canvas {
+      width: 100%;
+      height: min(65vh, 520px);
+      display: block;
+      border-radius: 8px;
+      background: #eaeaea;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18) inset;
+    }
+
+    .hint {
+      opacity: 0.75;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <canvas id="ascii-ocean" aria-label="Animated ASCII crashing ocean waves"></canvas>
+    <div class="hint">ASCII ocean • lightweight canvas loop</div>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('ascii-ocean');
+      const ctx = canvas.getContext('2d');
+
+      const chars = ' .,:;i1tfLCG08@';
+      const state = {
+        cols: 0,
+        rows: 0,
+        cellW: 0,
+        cellH: 0,
+        time: 0,
+        dpr: Math.max(1, Math.min(2, window.devicePixelRatio || 1))
+      };
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.floor(rect.width * state.dpr);
+        canvas.height = Math.floor(rect.height * state.dpr);
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+        state.cellW = 9;
+        state.cellH = 13;
+        state.cols = Math.max(20, Math.floor(rect.width / state.cellW));
+        state.rows = Math.max(12, Math.floor(rect.height / state.cellH));
+
+        ctx.font = '13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+        ctx.textBaseline = 'top';
+      }
+
+      function waveHeight(x, t) {
+        const swell = Math.sin(x * 0.18 + t * 0.95) * 0.85;
+        const chop = Math.sin(x * 0.72 - t * 2.1) * 0.28;
+        const set = Math.sin(x * 0.05 - t * 0.33) * 0.7;
+        return swell + chop + set;
+      }
+
+      function draw(ts) {
+        state.time = ts * 0.001;
+        const t = state.time;
+
+        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+        for (let y = 0; y < state.rows; y++) {
+          const ny = y / state.rows;
+          const horizon = 0.28;
+
+          for (let x = 0; x < state.cols; x++) {
+            const surface = horizon + 0.08 * waveHeight(x, t);
+            const depth = ny - surface;
+
+            if (depth < -0.02) {
+              // Sky
+              if (Math.random() < 0.0008) {
+                ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                ctx.fillText('.', x * state.cellW, y * state.cellH);
+              }
+              continue;
+            }
+
+            const foamPulse = Math.sin(t * 7 + x * 0.35) * 0.5 + 0.5;
+            const breaker = Math.max(0, 0.06 - Math.abs(depth));
+            const turbulence = Math.sin((x + y) * 0.55 - t * 8.5) * 0.5 + 0.5;
+
+            let energy = Math.max(0, 1 - depth * 3.6);
+            energy += breaker * 7.5 * foamPulse;
+            energy += turbulence * 0.4;
+
+            const i = Math.max(0, Math.min(chars.length - 1, Math.floor(energy * 2.2)));
+            const ch = chars[i];
+
+            const alpha = Math.min(0.95, 0.25 + Math.min(1, energy / 7) * 0.75);
+
+            ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+            ctx.fillText(ch, x * state.cellW, y * state.cellH);
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      const ro = new ResizeObserver(resize);
+      ro.observe(canvas);
+      resize();
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
