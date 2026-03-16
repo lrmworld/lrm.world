@@ -27,7 +27,7 @@ function lrm_project_bottom_redirect_script() {
         (function () {
             var redirectUrl = <?php echo wp_json_encode($home_url); ?>;
             var thresholdPx = 24;
-            var promptDistanceRatio = 0.05;
+            var promptDistanceRatio = 0.02;
             var hasRedirected = false;
             var lastPathname = window.location.pathname;
             var promptShown = false;
