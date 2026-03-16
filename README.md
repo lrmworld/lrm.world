@@ -1,1 +1,1 @@
-Custom Elements for my portfolio website https://lrm.world/
+Fun bits for my portfolio website https://lrm.world/
